@@ -39,8 +39,7 @@ export default function UsersAdmin({ companyId }: { companyId: string }) {
   };
 
   return (
-    <section className="card wide">
-      <h1>{t("usersTitle")}</h1>
+    <section className="panel">
       {users.map(u => (
         <div className="row" key={u.id}>
           <div>{u.ime ? u.ime + " · " : ""}{u.email}</div>

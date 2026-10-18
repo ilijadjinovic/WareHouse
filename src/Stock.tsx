@@ -24,17 +24,16 @@ export default function Stock({ companyId }: { companyId: string }) {
   const opts = locs.map(l => ({ id: l.id, label: pathOf(locs, l.id) })).sort((a, b) => a.label.localeCompare(b.label, undefined, { numeric: true }));
 
   return (
-    <section className="card wide">
-      <h1>{t("stockTitle")}</h1>
+    <section className="panel">
       <div className="toolbar">
         <select value={node} onChange={e => setNode(e.target.value)}><option value="">{t("allLocations")}</option>{opts.map(o => <option key={o.id} value={o.id}>{o.label}</option>)}</select>
         <select value={cat} onChange={e => setCat(e.target.value)}><option value="">{t("allCategories")}</option>{cats.map(c => <option key={c}>{c}</option>)}</select>
         <input placeholder={t("search")} value={q} onChange={e => setQ(e.target.value)} />
       </div>
       {rows.length === 0 ? <p>{t("noStock")}</p> : (
-        <div className="scroll"><table>
+        <div className="table-wrap"><table className="data-table">
           <thead><tr><th>{t("sifra")}</th><th>{t("naziv")}</th><th>{t("kategorija")}</th><th>{t("total")}</th><th>{t("jm")}</th><th>{t("perLoc")}</th></tr></thead>
-          <tbody>{rows.map(r => <tr key={r.sifra}><td>{r.sifra}</td><td>{r.it?.naziv}</td><td>{r.it?.kategorija}</td><td><strong>{r.total}</strong></td><td>{r.it?.jm}</td><td className="hint">{r.parts.join(" · ")}</td></tr>)}</tbody></table></div>
+          <tbody>{rows.map(r => <tr key={r.sifra}><td>{r.sifra}</td><td>{r.it?.naziv}</td><td>{r.it?.kategorija}</td><td><strong>{r.total}</strong></td><td>{r.it?.jm}</td><td className="wrap-col">{r.parts.join(" · ")}</td></tr>)}</tbody></table></div>
       )}
     </section>
   );

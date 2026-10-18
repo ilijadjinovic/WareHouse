@@ -62,8 +62,7 @@ export default function Locations({ companyId, role, regNames }: { companyId: st
 
   const top = kids(null);
   return (
-    <section className="card wide">
-      <h1>{t("locTitle")}</h1>
+    <section className="panel">
       {canWrite && <div className="toolbar"><button onClick={() => add(null, "warehouse")}>{t("addWarehouse")}</button>
         {top.length === 0 && regNames.length > 0 && <button className="secondary" onClick={fromReg}>{t("createFromReg", { names: regNames.join(", ") })}</button>}</div>}
       {top.length === 0 ? <p>{t("noLocations")}</p> : top.map(l => node(l, 0))}

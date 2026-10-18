@@ -6,19 +6,20 @@ import UsersAdmin from "./UsersAdmin";
 import Stock from "./Stock";
 import Popis from "./Popis";
 import Entry from "./Entry";
+import { Shell } from "./Shell";
 import type { Me } from "./lib";
+
+const ICON: Record<string, string> = { home: "🏠", stock: "📦", ulaz: "⬇️", izlaz: "⬆️", prenos: "🔁", popis: "📋", items: "🏷️", locations: "🏭", users: "👥" };
 
 export default function Workspace({ companyId, role, company, me }: { companyId: string; role: string; company: { name: string; warehouses?: string[] }; me: Me }) {
   const { t } = useTranslation();
   const [tab, setTab] = useState("home");
   const tabs = ["home", "stock", "ulaz", "izlaz", "prenos", ...(role !== "rukovodilac" ? ["popis"] : []), "items", "locations", ...(role === "admin" ? ["users"] : [])];
   return (
-    <>
-      <nav className="tabs">
-        {tabs.map(k => <button key={k} className={tab === k ? "on" : ""} onClick={() => setTab(k)}>{t("nav_" + k)}</button>)}
-      </nav>
+    <Shell menu={tabs.map(k => ({ key: k, icon: ICON[k], label: t("nav_" + k) }))} active={tab} onSelect={setTab}
+      eyebrow={company.name} title={t("nav_" + tab)} name={me.name} pill={t("role_" + role)}>
       {tab === "home" && (
-        <section className="card wide"><h1>{t("homeTitle")}</h1>
+        <section className="panel"><h2>{t("homeTitle")}</h2>
           <p>{t("homeText", { name: company.name })}</p>
           <p className="hint">{me.name} · {t("yourRole")}: {t("role_" + role)}</p></section>
       )}
@@ -28,6 +29,6 @@ export default function Workspace({ companyId, role, company, me }: { companyId:
       {tab === "items" && <Items companyId={companyId} role={role} />}
       {tab === "locations" && <Locations companyId={companyId} role={role} regNames={company.warehouses ?? []} />}
       {tab === "users" && role === "admin" && <UsersAdmin companyId={companyId} />}
-    </>
+    </Shell>
   );
 }

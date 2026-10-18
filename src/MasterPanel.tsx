@@ -4,6 +4,7 @@ import { collection, doc, getDocs, updateDoc } from "firebase/firestore";
 import { db } from "./firebase";
 
 type Row = { id: string; name: string; status: string; warehouses: string[]; ownerUid: string };
+const BADGE: Record<string, string> = { pending: "badge-amber", approved: "badge-green", rejected: "badge-red" };
 
 export default function MasterPanel() {
   const { t } = useTranslation();
@@ -18,19 +19,21 @@ export default function MasterPanel() {
     try { await updateDoc(doc(db, "companies", id), { status }); await load(); } catch { setErr(t("errUpdate")); }
   };
   return (
-    <section className="card wide">
-      <h1>{t("masterTitle")}</h1>
-      {rows.length === 0 && <p>{t("noCompanies")}</p>}
-      {rows.map(r => (
-        <div className="row" key={r.id}>
-          <div><strong>{r.name}</strong><div className="hint">{r.warehouses?.join(", ")} · {t("st_" + r.status)}</div></div>
-          <div className="actions">
-            {r.status !== "approved" && <button onClick={() => set(r.id, "approved")}>{t("approve")}</button>}
-            {r.status !== "rejected" && <button className="secondary" onClick={() => set(r.id, "rejected")}>{t("reject")}</button>}
-            {r.status !== "pending" && <button className="ghost" onClick={() => set(r.id, "pending")}>{t("reopen")}</button>}
-          </div>
-        </div>
-      ))}
+    <section className="panel">
+      {rows.length === 0 ? <p className="muted">{t("noCompanies")}</p> : (
+        <div className="table-wrap"><table className="data-table">
+          <thead><tr><th>{t("companyName")}</th><th>{t("warehouses")}</th><th>Status</th><th></th></tr></thead>
+          <tbody>{rows.map(r => (
+            <tr key={r.id}>
+              <td><strong>{r.name}</strong></td><td>{r.warehouses?.join(", ")}</td>
+              <td><span className={"badge " + (BADGE[r.status] ?? "badge-gray")}>{t("st_" + r.status)}</span></td>
+              <td><div className="actions">
+                {r.status !== "approved" && <button onClick={() => set(r.id, "approved")}>{t("approve")}</button>}
+                {r.status !== "rejected" && <button className="secondary" onClick={() => set(r.id, "rejected")}>{t("reject")}</button>}
+                {r.status !== "pending" && <button className="ghost" onClick={() => set(r.id, "pending")}>{t("reopen")}</button>}
+              </div></td>
+            </tr>))}</tbody></table></div>
+      )}
       {err && <p className="err" role="alert">{err}</p>}
     </section>
   );

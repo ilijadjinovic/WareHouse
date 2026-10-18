@@ -118,8 +118,7 @@ export default function Entry({ companyId, role, type, me }: { companyId: string
   };
 
   return (
-    <section className="card wide">
-      <h1>{t("nav_" + type)}</h1>
+    <section className="panel">
       {canWrite && (
         <form onSubmit={submit}>
           <div className="hdr">
@@ -133,8 +132,8 @@ export default function Entry({ companyId, role, type, me }: { companyId: string
             {type === "prenos" && <label>{t("napomena")}<input value={napomena} onChange={e => setNapomena(e.target.value)} /></label>}
           </div>
           <datalist id="dl-items">{[...items.values()].map(i => <option key={i.sifra} value={i.sifra}>{i.naziv}</option>)}</datalist>
-          <div className="scroll" onKeyDown={gridKeys(addRow)}>
-            <table className="grid"><thead><tr><th>{t("sifra")}</th><th>{t("naziv")}</th><th>{t("kolicina")}</th>
+          <div className="table-wrap" onKeyDown={gridKeys(addRow)}>
+            <table className="data-table grid"><thead><tr><th>{t("sifra")}</th><th>{t("naziv")}</th><th>{t("kolicina")}</th>
               <th>{t(type === "prenos" ? "fromLoc" : "lokacija")}</th>{type === "prenos" && <th>{t("toLoc")}</th>}<th></th></tr></thead>
               <tbody>{lines.map((l, i) => { const it = items.get(l.sifra.trim()); return (
                 <tr key={i}>
@@ -159,7 +158,7 @@ export default function Entry({ companyId, role, type, me }: { companyId: string
         <div className="row" key={d.id}>
           <div>
             <strong>{d.datum}</strong> {d.otpremnica && <span>· {d.otpremnica}</span>} {d.dobavljac && <span>· {d.dobavljac}</span>} {d.preuzeo && <span>· {d.preuzeo}</span>}{" "}
-            <span className="badge">{t("st_" + d.status)}</span>
+            <span className={"badge " + ({ cekanje: "badge-amber", proknjizen: "badge-green", odbijen: "badge-red", storniran: "badge-gray" } as Record<string, string>)[d.status]}>{t("st_" + d.status)}</span>
             <div className="hint">{d.lines.map(l => `${l.sifra} × ${l.kolicina}`).join(", ")} · {d.magacionerIme}{d.odobrio ? ` · ${t("odobrio")}: ${d.odobrio}` : ""}</div>
           </div>
           <div className="actions">

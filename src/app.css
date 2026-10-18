@@ -1,0 +1,52 @@
+/* Dopune za magacinsku aplikaciju — koriste promenljive iz style.css (tamna tema). */
+:root { color-scheme: dark; }
+
+/* Polja bez atributa type dobijaju isti izgled kao ostala */
+input:not([type]) {
+  width: 100%; padding: 10px 14px; border: 1px solid var(--color-border); border-radius: var(--radius-md);
+  background: var(--color-bg); color: var(--color-text); outline: none; transition: border-color .15s, box-shadow .15s;
+}
+input:not([type]):focus { border-color: var(--color-primary); box-shadow: 0 0 0 3px var(--color-primary-glow); }
+input:disabled, select:disabled, textarea:disabled { opacity: .6; cursor: not-allowed; }
+label:not(.inline) { margin-bottom: 14px; }
+label.inline { display: flex; align-items: center; gap: 8px; text-transform: none; letter-spacing: 0; font-weight: 400; margin: 0; }
+label.inline input { width: auto; }
+
+/* Dugmad bez klase .btn izgledaju kao .btn-primary; modifikatori: secondary, ghost, danger */
+:where(.content, .auth-card) button:where(:not(.btn):not(.icon-btn):not(.lang-option)) {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; white-space: nowrap;
+  border: 1px solid transparent; border-radius: var(--radius-md); padding: 10px 18px;
+  font-weight: 600; font-size: 14px; cursor: pointer; transition: filter .15s, background .15s;
+  background: var(--color-primary); color: #fff;
+}
+.content button:hover:not(:disabled), .auth-card button:hover:not(:disabled) { filter: brightness(1.12); }
+.content button:disabled, .auth-card button:disabled { opacity: .5; cursor: not-allowed; }
+button.secondary { background: transparent; color: var(--color-text); border-color: var(--color-border); }
+button.ghost { background: none; color: var(--color-text-muted); padding: 6px 10px; border-color: transparent; }
+button.danger { color: var(--color-danger); }
+.auth-card form button, .auth-card > button { width: 100%; }
+.actions button, .row button, .toolbar button { font-size: 12.5px; padding: 7px 14px; }
+.actions button.ghost, .row button.ghost { padding: 6px 10px; }
+
+/* Raspored */
+.toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
+.toolbar input, .toolbar select { width: auto; flex: 1 1 200px; }
+.subform { background: var(--color-surface-2); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 16px; margin: 14px 0; }
+.row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--color-border); flex-wrap: wrap; }
+.actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.hdr { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0 16px; }
+.panel h2 { font-size: 16px; margin: 22px 0 12px; }
+.panel > h2:first-child, .subform > h2:first-child { margin-top: 0; }
+.err { color: var(--color-danger); margin-top: 14px; font-size: 13.5px; }
+.ok { color: var(--color-success); margin-top: 14px; font-size: 13.5px; }
+.sep { text-align: center; color: var(--color-text-faint); margin: 16px 0; }
+
+/* Tabele za unos (popis, ulaz, izlaz, prenos) */
+.grid td { padding: 6px 8px; }
+.grid input, .grid select { padding: 7px 10px; margin: 0; }
+.grid input.num { width: 100px; min-width: 80px; }
+.grid .nm { color: var(--color-text-muted); font-size: 13px; min-width: 170px; }
+
+/* Prekidač jezika i prijava */
+.auth-lang { position: fixed; top: 16px; right: 16px; }
+.brand-mark { display: flex; align-items: center; justify-content: center; background: var(--color-primary); color: #fff; font-family: var(--font-display); font-weight: 800; }

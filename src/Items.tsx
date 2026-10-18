@@ -49,8 +49,7 @@ export default function Items({ companyId, role }: { companyId: string; role: st
   };
 
   return (
-    <section className="card wide">
-      <h1>{t("itemsTitle")}</h1>
+    <section className="panel">
       <div className="toolbar">
         <input placeholder={t("search")} value={q} onChange={e => setQ(e.target.value)} />
         <select value={cat} onChange={e => setCat(e.target.value)}>
@@ -75,14 +74,14 @@ export default function Items({ companyId, role }: { companyId: string; role: st
       {err && <p className="err" role="alert">{err}</p>}
       <p className="hint">{t("count")}: {shown.length}</p>
       {items.length === 0 ? <p>{t("noItems")}</p> : (
-        <div className="scroll"><table>
-          <thead><tr><th>{t("sifra")}</th><th>{t("kategorija")}</th><th>{t("naziv")}</th><th>{t("jm")}</th><th>{t("napomena")}</th><th></th></tr></thead>
+        <div className="table-wrap"><table className="data-table">
+          <thead><tr><th>{t("sifra")}</th><th>{t("kategorija")}</th><th>{t("naziv")}</th><th>{t("jm")}</th><th className="wrap-col">{t("napomena")}</th><th></th></tr></thead>
           <tbody>{shown.map(i => (
-            <tr key={i.sifra}><td>{i.sifra}</td><td>{i.kategorija}</td><td>{i.naziv}</td><td>{i.jm}</td><td>{i.napomena}</td>
-              <td className="actions">
+            <tr key={i.sifra}><td>{i.sifra}</td><td>{i.kategorija}</td><td>{i.naziv}</td><td>{i.jm}</td><td className="wrap-col">{i.napomena}</td>
+              <td><div className="actions">
                 {canWrite && <button className="ghost" onClick={() => { setForm(i); setIsNew(false); setErr(""); }}>{t("edit")}</button>}
                 {(role === "admin" || role === "rukovodilac") && <button className="ghost danger" onClick={() => remove(i.sifra)}>{t("del")}</button>}
-              </td></tr>))}</tbody></table></div>
+              </div></td></tr>))}</tbody></table></div>
       )}
     </section>
   );

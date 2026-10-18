@@ -1,35 +1,14 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  GoogleAuthProvider, onAuthStateChanged, signInWithEmailAndPassword,
-  signInWithPopup, signOut, type User
-} from "firebase/auth";
+import { GoogleAuthProvider, onAuthStateChanged, signInWithEmailAndPassword, signInWithPopup, type User } from "firebase/auth";
 import { collection, doc, getDoc, serverTimestamp, writeBatch } from "firebase/firestore";
 import { auth, db } from "./firebase";
+import { AuthBox, Shell } from "./Shell";
 import MasterPanel from "./MasterPanel";
 import Workspace from "./Workspace";
 
 type Profile = { companyId: string; role: string; active?: boolean; ime?: string };
 type Company = { name: string; status: "pending" | "approved" | "rejected"; warehouses?: string[] };
-
-function Shell({ children, user }: { children: React.ReactNode; user?: User | null }) {
-  const { t, i18n } = useTranslation();
-  const setLang = (l: string) => { localStorage.setItem("lang", l); i18n.changeLanguage(l); };
-  return (
-    <div className="shell">
-      <header>
-        <strong>{t("appName")}</strong>
-        <div className="right">
-          <select aria-label={t("language")} value={i18n.language} onChange={e => setLang(e.target.value)}>
-            <option value="sr">Srpski</option><option value="en">English</option>
-          </select>
-          {user && <button className="ghost" onClick={() => signOut(auth)}>{t("logout")}</button>}
-        </div>
-      </header>
-      <main>{children}</main>
-    </div>
-  );
-}
 
 function Login() {
   const { t } = useTranslation();
@@ -43,8 +22,8 @@ function Login() {
     try { await signInWithPopup(auth, new GoogleAuthProvider()); } catch { setErr(t("errAuth")); }
   };
   return (
-    <section className="card">
-      <h1>{t("loginTitle")}</h1>
+    <>
+      <h2>{t("loginTitle")}</h2>
       <form onSubmit={emailLogin}>
         <label>{t("email")}<input type="email" value={email} onChange={e => setEmail(e.target.value)} required /></label>
         <label>{t("password")}<input type="password" value={pw} onChange={e => setPw(e.target.value)} required /></label>
@@ -54,7 +33,7 @@ function Login() {
       <button className="secondary" onClick={google}>{t("loginGoogle")}</button>
       <p className="hint">{t("googleHint")}</p>
       {err && <p className="err" role="alert">{err}</p>}
-    </section>
+    </>
   );
 }
 
@@ -74,8 +53,8 @@ function InitCompany({ user, onDone }: { user: User; onDone: () => void }) {
     } catch (e) { console.error(e); setErr(t("errSave")); }
   };
   return (
-    <section className="card">
-      <h1>{t("initTitle")}</h1>
+    <>
+      <h2>{t("initTitle")}</h2>
       <p>{t("initIntro")}</p>
       <form onSubmit={submit}>
         <label>{t("companyName")}<input value={name} onChange={e => setName(e.target.value)} required /></label>
@@ -84,7 +63,7 @@ function InitCompany({ user, onDone }: { user: User; onDone: () => void }) {
         <button type="submit">{t("submitCompany")}</button>
       </form>
       {err && <p className="err" role="alert">{err}</p>}
-    </section>
+    </>
   );
 }
 
@@ -113,15 +92,16 @@ export default function App() {
   };
   useEffect(() => { if (user) load(user); else { setProfile(null); setCompany(null); setIsMaster(false); } }, [user]);
 
-  if (!ready || loading) return <Shell user={user}><p>…</p></Shell>;
-  if (!user) return <Shell><Login /></Shell>;
-  if (isMaster) return <Shell user={user}><MasterPanel /></Shell>;
-  if (!profile) return <Shell user={user}><InitCompany user={user} onDone={() => load(user)} /></Shell>;
-  if (profile.active === false) return <Shell user={user}><p>{t("inactive")}</p></Shell>;
-  if (!company) return <Shell user={user}><p>{t("noAccess")}</p></Shell>;
-  if (company.status === "pending")
-    return <Shell user={user}><section className="card"><h1>{t("pendingTitle")}</h1><p>{t("pendingText", { name: company.name })}</p></section></Shell>;
-  if (company.status === "rejected")
-    return <Shell user={user}><section className="card"><p>{t("rejectedText", { name: company.name })}</p></section></Shell>;
-  return <Shell user={user}><Workspace companyId={profile.companyId} role={profile.role} company={company} me={{ uid: user.uid, name: profile.ime || user.displayName || user.email || "" }} /></Shell>;
+  if (!ready || loading) return <AuthBox><p>…</p></AuthBox>;
+  if (!user) return <AuthBox><Login /></AuthBox>;
+  if (isMaster) return (
+    <Shell menu={[{ key: "m", icon: "🛡️", label: t("masterTitle") }]} active="m" onSelect={() => {}} title={t("masterTitle")}
+      name={user.displayName || user.email || ""} pill="Master admin"><MasterPanel /></Shell>);
+  if (!profile) return <AuthBox wide logout><InitCompany user={user} onDone={() => load(user)} /></AuthBox>;
+  if (profile.active === false) return <AuthBox logout><p>{t("inactive")}</p></AuthBox>;
+  if (!company) return <AuthBox logout><p>{t("noAccess")}</p></AuthBox>;
+  if (company.status === "pending") return <AuthBox logout><h2>{t("pendingTitle")}</h2><p>{t("pendingText", { name: company.name })}</p></AuthBox>;
+  if (company.status === "rejected") return <AuthBox logout><p>{t("rejectedText", { name: company.name })}</p></AuthBox>;
+  return <Workspace companyId={profile.companyId} role={profile.role} company={company}
+    me={{ uid: user.uid, name: profile.ime || user.displayName || user.email || "" }} />;
 }

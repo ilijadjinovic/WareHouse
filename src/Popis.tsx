@@ -87,8 +87,7 @@ export default function Popis({ companyId, role, me }: { companyId: string; role
   };
 
   return (
-    <section className="card wide">
-      <h1>{t("popisTitle")}</h1>
+    <section className="panel">
       <label>{t("selectWarehouse")}<select value={wid} onChange={e => choose(e.target.value)}><option value="">—</option>{warehouses.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}</select></label>
       {wid && status === "confirmed" && <p>{t("popisExists", { d: doneDate })}</p>}
       {wid && status !== "confirmed" && canWrite && <>
@@ -102,8 +101,8 @@ export default function Popis({ companyId, role, me }: { companyId: string; role
           <label className="inline hint">{t("popisImportHelp")}<input type="file" accept=".xlsx" onChange={onFile} /></label>
         </div>
         <datalist id="dl-items">{[...items.values()].map(i => <option key={i.sifra} value={i.sifra}>{i.naziv}</option>)}</datalist>
-        <div className="scroll" onKeyDown={gridKeys(addRow)}>
-          <table className="grid"><thead><tr><th>{t("sifra")}</th><th>{t("naziv")}</th><th>{t("lokacija")}</th><th>{t("kolicina")}</th><th></th></tr></thead>
+        <div className="table-wrap" onKeyDown={gridKeys(addRow)}>
+          <table className="data-table grid"><thead><tr><th>{t("sifra")}</th><th>{t("naziv")}</th><th>{t("lokacija")}</th><th>{t("kolicina")}</th><th></th></tr></thead>
             <tbody>{lines.map((l, i) => { const it = items.get(l.sifra.trim()); return (
               <tr key={i}>
                 <td><input list="dl-items" value={l.sifra} onChange={e => setLine(i, { sifra: e.target.value })} /></td>
