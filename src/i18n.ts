@@ -56,7 +56,19 @@ const sr = { translation: {
   popisExists: "Početni popis ovog magacina je potvrđen ({{d}}). Naknadni popisi stižu u sledećoj fazi.", popisHelp: "Prazna količina se preskače. Količina 0 se ne knjiži. Enter prelazi u sledeće polje, a u poslednjem dodaje novi red.",
   popisImportHelp: "Uvoz iz Excela (kolone: ŠIFRA, LOKACIJA (opciono, naziv lokacije), KOLIČINA). Redovi se dodaju u tabelu na proveru.",
   stockTitle: "Lager lista", allLocations: "Ceo magacin (sve lokacije)", total: "Ukupno", perLoc: "Po lokacijama", noStock: "Nema artikala na stanju.",
-  noAccess: "Nalog nije povezan ni sa jednom firmom. Obrati se administratoru firme."
+  noAccess: "Nalog nije povezan ni sa jednom firmom. Obrati se administratoru firme.",
+  nav_profile: "Profil", tab_personal: "Lični podaci", tab_password: "Lozinka", tab_company: "Firma",
+  firstName: "Ime", lastName: "Prezime", telefon: "Telefon", pozicija: "Radno mesto",
+  errIme: "Unesi ime.", profileSaved: "Podaci su sačuvani.",
+  currentPassword: "Trenutna lozinka", newPassword: "Nova lozinka (najmanje 8 znakova)", repeatPassword: "Ponovi novu lozinku",
+  changePassword: "Promeni lozinku", pwChanged: "Lozinka je promenjena.", errPwWrong: "Trenutna lozinka nije tačna.",
+  errPwWeak: "Nova lozinka mora imati najmanje 8 znakova.", errPwMatch: "Nove lozinke se ne poklapaju.", errTooMany: "Previše pokušaja. Pokušaj ponovo kasnije.",
+  googleAccountPw: "Prijavljen si Google nalogom, pa nemaš lozinku za ovu aplikaciju. Možeš da je postaviš preko linka koji stiže na tvoj mejl.",
+  sendPwLink: "Pošalji link za lozinku", pwLinkSent: "Link je poslat na {{email}}.", errReset: "Slanje linka nije uspelo.",
+  resetLinkUser: "Pošalji link za novu lozinku", resetSent: "Link za novu lozinku je poslat na {{email}}.",
+  sec_basic: "Osnovni podaci", sec_contact: "Adresa i kontakt", sec_other: "Ostalo", saveCompany: "Sačuvaj podatke firme", errCompanyName: "Unesi naziv firme.",
+  c_punNaziv: "Pun poslovni naziv", c_pib: "PIB", c_maticni: "Matični broj", c_adresa: "Ulica i broj", c_postanski: "Poštanski broj", c_mesto: "Mesto",
+  c_drzava: "Država", c_telefon: "Telefon", c_email: "E-pošta firme", c_web: "Veb sajt", c_kontakt: "Kontakt osoba", c_racun: "Tekući račun", c_napomena: "Napomena"
 }};
 const en = { translation: {
   appName: "Warehouse", language: "Language", logout: "Sign out",
@@ -113,7 +125,19 @@ const en = { translation: {
   popisExists: "The initial stocktake of this warehouse is confirmed ({{d}}). Later stocktakes come in the next phase.", popisHelp: "Empty quantities are skipped. Quantity 0 is not posted. Enter moves to the next field, and in the last field adds a new row.",
   popisImportHelp: "Excel import (columns: ŠIFRA, LOKACIJA (optional, location name), KOLIČINA). Rows are added to the table for review.",
   stockTitle: "Stock", allLocations: "Whole warehouse (all locations)", total: "Total", perLoc: "By location", noStock: "No items in stock.",
-  noAccess: "This account is not linked to a company. Contact your company administrator."
+  noAccess: "This account is not linked to a company. Contact your company administrator.",
+  nav_profile: "Profile", tab_personal: "Personal details", tab_password: "Password", tab_company: "Company",
+  firstName: "First name", lastName: "Last name", telefon: "Phone", pozicija: "Job title",
+  errIme: "Enter a first name.", profileSaved: "Details saved.",
+  currentPassword: "Current password", newPassword: "New password (at least 8 characters)", repeatPassword: "Repeat new password",
+  changePassword: "Change password", pwChanged: "Password changed.", errPwWrong: "The current password is incorrect.",
+  errPwWeak: "The new password must have at least 8 characters.", errPwMatch: "The new passwords do not match.", errTooMany: "Too many attempts. Try again later.",
+  googleAccountPw: "You signed in with Google, so you have no password for this app. You can set one using a link sent to your email.",
+  sendPwLink: "Send password link", pwLinkSent: "Link sent to {{email}}.", errReset: "Sending the link failed.",
+  resetLinkUser: "Send new password link", resetSent: "New password link sent to {{email}}.",
+  sec_basic: "Basic details", sec_contact: "Address and contact", sec_other: "Other", saveCompany: "Save company details", errCompanyName: "Enter the company name.",
+  c_punNaziv: "Full legal name", c_pib: "Tax ID (PIB)", c_maticni: "Registration number", c_adresa: "Street and number", c_postanski: "Postal code", c_mesto: "City",
+  c_drzava: "Country", c_telefon: "Phone", c_email: "Company email", c_web: "Website", c_kontakt: "Contact person", c_racun: "Bank account", c_napomena: "Note"
 }};
 
 i18n.use(initReactI18next).init({

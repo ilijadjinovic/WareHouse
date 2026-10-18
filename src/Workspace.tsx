@@ -6,23 +6,26 @@ import UsersAdmin from "./UsersAdmin";
 import Stock from "./Stock";
 import Popis from "./Popis";
 import Entry from "./Entry";
+import Profile, { type CompanyDoc } from "./Profile";
 import { Shell } from "./Shell";
 import type { Me } from "./lib";
+import type { User } from "firebase/auth";
 
 const ICON: Record<string, string> = { home: "🏠", stock: "📦", ulaz: "⬇️", izlaz: "⬆️", prenos: "🔁", popis: "📋", items: "🏷️", locations: "🏭", users: "👥" };
 
-export default function Workspace({ companyId, role, company, me }: { companyId: string; role: string; company: { name: string; warehouses?: string[] }; me: Me }) {
+export default function Workspace({ companyId, role, company, me, user, onChanged }: { companyId: string; role: string; company: CompanyDoc; me: Me; user: User; onChanged: () => void }) {
   const { t } = useTranslation();
   const [tab, setTab] = useState("home");
   const tabs = ["home", "stock", "ulaz", "izlaz", "prenos", ...(role !== "rukovodilac" ? ["popis"] : []), "items", "locations", ...(role === "admin" ? ["users"] : [])];
   return (
     <Shell menu={tabs.map(k => ({ key: k, icon: ICON[k], label: t("nav_" + k) }))} active={tab} onSelect={setTab}
-      eyebrow={company.name} title={t("nav_" + tab)} name={me.name} pill={t("role_" + role)}>
+      eyebrow={company.name} title={t("nav_" + tab)} name={me.name} pill={t("role_" + role)} onProfile={() => setTab("profile")}>
       {tab === "home" && (
         <section className="panel"><h2>{t("homeTitle")}</h2>
           <p>{t("homeText", { name: company.name })}</p>
           <p className="hint">{me.name} · {t("yourRole")}: {t("role_" + role)}</p></section>
       )}
+      {tab === "profile" && <Profile user={user} kind="member" role={role} companyId={companyId} company={company} onChanged={onChanged} />}
       {tab === "stock" && <Stock companyId={companyId} />}
       {tab === "popis" && <Popis companyId={companyId} role={role} me={me} />}
       {(tab === "ulaz" || tab === "izlaz" || tab === "prenos") && <Entry key={tab} companyId={companyId} role={role} type={tab} me={me} />}

@@ -29,8 +29,8 @@ export function AuthBox({ wide, logout, children }: { wide?: boolean; logout?: b
 
 export type MenuItem = { key: string; icon: string; label: string };
 
-export function Shell({ menu, active, onSelect, eyebrow, title, name, pill, children }: {
-  menu: MenuItem[]; active: string; onSelect: (k: string) => void; eyebrow?: string; title: string; name: string; pill: string; children: React.ReactNode;
+export function Shell({ menu, active, onSelect, eyebrow, title, name, pill, onProfile, children }: {
+  menu: MenuItem[]; active: string; onSelect: (k: string) => void; eyebrow?: string; title: string; name: string; pill: string; onProfile?: () => void; children: React.ReactNode;
 }) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
@@ -52,7 +52,7 @@ export function Shell({ menu, active, onSelect, eyebrow, title, name, pill, chil
         <button id="menu-toggle" className="icon-btn" aria-label="Menu" onClick={() => setOpen(o => !o)}>☰</button>
         <div className="topbar-spacer" />
         <LangSwitch />
-        <div className="user-chip"><div className="user-avatar">{(name || "?")[0].toUpperCase()}</div><span className="user-name">{name}</span></div>
+        <button type="button" className="user-chip" onClick={onProfile} title={t("nav_profile")}><div className="user-avatar">{(name || "?")[0].toUpperCase()}</div><span className="user-name">{name}</span></button>
         <button id="logout-btn" className="btn btn-outline btn-sm" onClick={() => signOut(auth)}>
           <span className="logout-icon">⎋</span><span className="logout-label">{t("logout")}</span></button>
       </header>

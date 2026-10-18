@@ -12,6 +12,13 @@ service cloud.firestore {
     function approved(cid) { return get(/databases/$(db)/documents/companies/$(cid)).data.status == 'approved'; }
     function canWrite(cid) { return master() || (roleIs(cid, ['admin','magacioner']) && approved(cid)); }
     function canDeleteItem(cid) { return master() || (roleIs(cid, ['admin','rukovodilac']) && approved(cid)); }
+    function strOk(k, n) { return request.resource.data.get(k, '') is string && request.resource.data.get(k, '').size() <= n; }
+    function companyFieldsOk() {
+      return request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 200
+        && strOk('punNaziv', 200) && strOk('pib', 200) && strOk('maticni', 200) && strOk('adresa', 200) && strOk('postanski', 200)
+        && strOk('mesto', 200) && strOk('drzava', 200) && strOk('telefon', 200) && strOk('email', 200) && strOk('web', 200)
+        && strOk('kontakt', 200) && strOk('racun', 200) && strOk('napomena', 500);
+    }
     function canDelete(cid) { return master() || (adminOf(cid) && approved(cid)); }
 
     // Šifrarnik: ID dokumenta je šifra, pa je jedinstvenost zagarantovana.
@@ -92,7 +99,11 @@ service cloud.firestore {
     // Master admin: dokument se pravi ručno u konzoli, klijent ne može da piše.
     match /masters/{uid} {
       allow read: if signed() && request.auth.uid == uid;
-      allow write: if false;
+      // Master sme da menja samo svoje lične podatke; dokument se i dalje pravi ručno u konzoli.
+      allow update: if master() && request.auth.uid == uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ime','prezime','telefon','pozicija'])
+        && strOk('ime', 80) && strOk('prezime', 80) && strOk('telefon', 80) && strOk('pozicija', 80);
+      allow create, delete: if false;
     }
 
     match /companies/{cid} {
@@ -101,7 +112,12 @@ service cloud.firestore {
         && request.resource.data.ownerUid == request.auth.uid
         && request.resource.data.status == 'pending'
         && request.resource.data.keys().hasOnly(['name','ownerUid','status','warehouses','createdAt']);
-      allow update, delete: if master();
+      // Master odobrava/odbija; Admin firme menja samo podatke svoje firme (ne status, vlasnika ni magacine).
+      allow update: if master()
+        || (adminOf(cid)
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name','punNaziv','pib','maticni','adresa','postanski','mesto','drzava','telefon','email','web','kontakt','racun','napomena'])
+            && companyFieldsOk());
+      allow delete: if master();
     }
 
     match /users/{uid} {
@@ -123,7 +139,11 @@ service cloud.firestore {
       allow update: if master()
         || (adminOf(resource.data.companyId) && request.auth.uid != uid
               && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role','active'])
-              && request.resource.data.role in ['admin','rukovodilac','magacioner']);
+              && request.resource.data.role in ['admin','rukovodilac','magacioner'])
+        // Korisnik menja samo svoje lične podatke (ne ulogu, firmu, aktivnost ni email).
+        || (signed() && request.auth.uid == uid && resource.data.get('active', true) == true
+              && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ime','prezime','telefon','pozicija'])
+              && strOk('ime', 80) && strOk('prezime', 80) && strOk('telefon', 80) && strOk('pozicija', 80));
 
       allow delete: if master();
     }

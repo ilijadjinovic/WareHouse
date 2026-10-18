@@ -6,9 +6,10 @@ import { auth, db } from "./firebase";
 import { AuthBox, Shell } from "./Shell";
 import MasterPanel from "./MasterPanel";
 import Workspace from "./Workspace";
+import Profile, { fullName, type CompanyDoc } from "./Profile";
 
-type Profile = { companyId: string; role: string; active?: boolean; ime?: string };
-type Company = { name: string; status: "pending" | "approved" | "rejected"; warehouses?: string[] };
+type UserDoc = { companyId: string; role: string; active?: boolean; ime?: string; prezime?: string };
+type Company = CompanyDoc & { status: "pending" | "approved" | "rejected" };
 
 function Login() {
   const { t } = useTranslation();
@@ -71,37 +72,43 @@ export default function App() {
   const { t } = useTranslation();
   const [user, setUser] = useState<User | null>(null);
   const [ready, setReady] = useState(false);
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [profile, setProfile] = useState<UserDoc | null>(null);
+  const [masterName, setMasterName] = useState("");
+  const [masterView, setMasterView] = useState("m");
   const [company, setCompany] = useState<Company | null>(null);
   const [loading, setLoading] = useState(false);
   const [isMaster, setIsMaster] = useState(false);
 
   useEffect(() => onAuthStateChanged(auth, u => { setUser(u); setReady(true); }), []);
 
-  const load = async (u: User) => {
-    setLoading(true);
+  const load = async (u: User, silent = false) => {
+    if (!silent) setLoading(true);
     const m = await getDoc(doc(db, "masters", u.uid));
     setIsMaster(m.exists());
+    if (m.exists()) setMasterName(fullName(m.data() as { ime?: string; prezime?: string }));
     const p = await getDoc(doc(db, "users", u.uid));
     if (p.exists()) {
-      const pr = p.data() as Profile; setProfile(pr);
+      const pr = p.data() as UserDoc; setProfile(pr);
       const c = await getDoc(doc(db, "companies", pr.companyId));
       setCompany(c.exists() ? (c.data() as Company) : null);
     } else { setProfile(null); setCompany(null); }
-    setLoading(false);
+    if (!silent) setLoading(false);
   };
   useEffect(() => { if (user) load(user); else { setProfile(null); setCompany(null); setIsMaster(false); } }, [user]);
 
   if (!ready || loading) return <AuthBox><p>…</p></AuthBox>;
   if (!user) return <AuthBox><Login /></AuthBox>;
   if (isMaster) return (
-    <Shell menu={[{ key: "m", icon: "🛡️", label: t("masterTitle") }]} active="m" onSelect={() => {}} title={t("masterTitle")}
-      name={user.displayName || user.email || ""} pill="Master admin"><MasterPanel /></Shell>);
+    <Shell menu={[{ key: "m", icon: "🛡️", label: t("masterTitle") }]} active={masterView} onSelect={setMasterView}
+      title={masterView === "profile" ? t("nav_profile") : t("masterTitle")}
+      name={masterName || user.displayName || user.email || ""} pill="Master admin" onProfile={() => setMasterView("profile")}>
+      {masterView === "profile" ? <Profile user={user} kind="master" onChanged={() => load(user, true)} /> : <MasterPanel />}
+    </Shell>);
   if (!profile) return <AuthBox wide logout><InitCompany user={user} onDone={() => load(user)} /></AuthBox>;
   if (profile.active === false) return <AuthBox logout><p>{t("inactive")}</p></AuthBox>;
   if (!company) return <AuthBox logout><p>{t("noAccess")}</p></AuthBox>;
   if (company.status === "pending") return <AuthBox logout><h2>{t("pendingTitle")}</h2><p>{t("pendingText", { name: company.name })}</p></AuthBox>;
   if (company.status === "rejected") return <AuthBox logout><p>{t("rejectedText", { name: company.name })}</p></AuthBox>;
-  return <Workspace companyId={profile.companyId} role={profile.role} company={company}
-    me={{ uid: user.uid, name: profile.ime || user.displayName || user.email || "" }} />;
+  return <Workspace companyId={profile.companyId} role={profile.role} company={company} user={user} onChanged={() => load(user, true)}
+    me={{ uid: user.uid, name: fullName(profile) || user.displayName || user.email || "" }} />;
 }

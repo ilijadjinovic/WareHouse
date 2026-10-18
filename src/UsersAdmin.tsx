@@ -1,18 +1,18 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { initializeApp, deleteApp } from "firebase/app";
-import { createUserWithEmailAndPassword, getAuth, signOut } from "firebase/auth";
+import { createUserWithEmailAndPassword, getAuth, sendPasswordResetEmail, signOut } from "firebase/auth";
 import { collection, doc, getDocs, query, setDoc, updateDoc, where } from "firebase/firestore";
 import { auth, db, firebaseConfig } from "./firebase";
 
-type U = { id: string; email: string; ime?: string; role: string; active: boolean };
+type U = { id: string; email: string; ime?: string; prezime?: string; role: string; active: boolean };
 const ROLES = ["admin", "rukovodilac", "magacioner"];
 
 export default function UsersAdmin({ companyId }: { companyId: string }) {
   const { t } = useTranslation();
   const [users, setUsers] = useState<U[]>([]);
   const [ime, setIme] = useState(""); const [email, setEmail] = useState(""); const [pw, setPw] = useState(""); const [role, setRole] = useState("magacioner");
-  const [err, setErr] = useState("");
+  const [err, setErr] = useState(""); const [msg, setMsg] = useState("");
 
   const load = async () => {
     const snap = await getDocs(query(collection(db, "users"), where("companyId", "==", companyId)));
@@ -33,6 +33,10 @@ export default function UsersAdmin({ companyId }: { companyId: string }) {
     } catch { setErr(t("errUser")); }
     finally { await deleteApp(second); }
   };
+  const sendLink = async (u: U) => {
+    setErr(""); setMsg("");
+    try { await sendPasswordResetEmail(auth, u.email); setMsg(t("resetSent", { email: u.email })); } catch { setErr(t("errReset")); }
+  };
   const patch = async (id: string, data: Partial<U>) => {
     setErr("");
     try { await updateDoc(doc(db, "users", id), data); await load(); } catch { setErr(t("errUpdate")); }
@@ -42,7 +46,7 @@ export default function UsersAdmin({ companyId }: { companyId: string }) {
     <section className="panel">
       {users.map(u => (
         <div className="row" key={u.id}>
-          <div>{u.ime ? u.ime + " · " : ""}{u.email}</div>
+          <div>{[u.ime, u.prezime].filter(Boolean).join(" ") ? [u.ime, u.prezime].filter(Boolean).join(" ") + " · " : ""}{u.email}</div>
           <div className="actions">
             <select aria-label={t("role")} value={u.role} disabled={u.id === auth.currentUser?.uid}
               onChange={e => patch(u.id, { role: e.target.value })}>
@@ -50,6 +54,7 @@ export default function UsersAdmin({ companyId }: { companyId: string }) {
             </select>
             <label className="inline"><input type="checkbox" checked={u.active} disabled={u.id === auth.currentUser?.uid}
               onChange={e => patch(u.id, { active: e.target.checked })} />{t("active")}</label>
+            {u.id !== auth.currentUser?.uid && <button type="button" className="ghost" onClick={() => sendLink(u)}>{t("resetLinkUser")}</button>}
           </div>
         </div>
       ))}
@@ -62,6 +67,7 @@ export default function UsersAdmin({ companyId }: { companyId: string }) {
           {ROLES.map(r => <option key={r} value={r}>{t("role_" + r)}</option>)}</select></label>
         <button type="submit">{t("addUser")}</button>
       </form>
+      {msg && <p className="ok" role="status">{msg}</p>}
       {err && <p className="err" role="alert">{err}</p>}
     </section>
   );

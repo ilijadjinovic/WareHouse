@@ -50,3 +50,6 @@ button.danger { color: var(--color-danger); }
 /* Prekidač jezika i prijava */
 .auth-lang { position: fixed; top: 16px; right: 16px; }
 .brand-mark { display: flex; align-items: center; justify-content: center; background: var(--color-primary); color: #fff; font-family: var(--font-display); font-weight: 800; }
+
+/* Korisnik u zaglavlju je dugme koje otvara Profil */
+.user-chip { color: inherit; }
