@@ -1,0 +1,131 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{db}/documents {
+    function signed() { return request.auth != null; }
+    function master() { return signed() && exists(/databases/$(db)/documents/masters/$(request.auth.uid)); }
+    function hasProf() { return signed() && exists(/databases/$(db)/documents/users/$(request.auth.uid)); }
+    function prof() { return get(/databases/$(db)/documents/users/$(request.auth.uid)).data; }
+    function memberOf(cid) { return hasProf() && prof().companyId == cid && prof().get('active', true) == true; }
+    function adminOf(cid) { return memberOf(cid) && prof().role == 'admin'; }
+
+    function roleIs(cid, roles) { return memberOf(cid) && prof().role in roles; }
+    function approved(cid) { return get(/databases/$(db)/documents/companies/$(cid)).data.status == 'approved'; }
+    function canWrite(cid) { return master() || (roleIs(cid, ['admin','magacioner']) && approved(cid)); }
+    function canDeleteItem(cid) { return master() || (roleIs(cid, ['admin','rukovodilac']) && approved(cid)); }
+    function canDelete(cid) { return master() || (adminOf(cid) && approved(cid)); }
+
+    // Šifrarnik: ID dokumenta je šifra, pa je jedinstvenost zagarantovana.
+    match /companies/{cid}/items/{sifra} {
+      allow read: if master() || memberOf(cid);
+      allow create, update: if canWrite(cid)
+        && request.resource.data.keys().hasOnly(['sifra','kategorija','naziv','jm','napomena','createdAt'])
+        && request.resource.data.keys().hasAll(['sifra','kategorija','naziv','jm'])
+        && request.resource.data.sifra == sifra
+        && request.resource.data.kategorija.size() > 0
+        && request.resource.data.naziv.size() > 0
+        && request.resource.data.jm.size() > 0;
+      allow delete: if canDeleteItem(cid);
+    }
+
+    // Struktura magacina: magacin -> podmagacin -> pozicija (opciono).
+    match /companies/{cid}/locations/{lid} {
+      allow read: if master() || memberOf(cid);
+      allow create, update: if canWrite(cid)
+        && request.resource.data.keys().hasOnly(['name','type','parentId','createdAt'])
+        && request.resource.data.type in ['warehouse','sub','pos']
+        && request.resource.data.name.size() > 0;
+      allow delete: if canDelete(cid);
+    }
+
+    function canPost(cid) { return master() || (roleIs(cid, ['admin','magacioner','rukovodilac']) && approved(cid)); }
+
+    // Tekuće stanje po artiklu i lokaciji (upisuje se u istoj transakciji kao kretanje).
+    match /companies/{cid}/stock/{sid} {
+      allow read: if master() || memberOf(cid);
+      allow create, update: if canPost(cid)
+        && request.resource.data.keys().hasOnly(['sifra','locId','qty'])
+        && request.resource.data.qty is int && request.resource.data.qty >= 0;
+      allow delete: if false;
+    }
+
+    // Dnevnik kretanja: samo se dopisuje, nikad se ne menja ni briše.
+    match /companies/{cid}/movements/{mid} {
+      allow read: if master() || memberOf(cid);
+      allow create: if canPost(cid)
+        && request.resource.data.keys().hasOnly(['type','datum','sifra','locId','delta','docId','popisId','warehouseId','razlog','stornoOd','createdAt','createdBy','createdByName'])
+        && request.resource.data.keys().hasAll(['type','datum','sifra','locId','delta','createdAt','createdBy','createdByName'])
+        && request.resource.data.type in ['popis','ulaz','izlaz','prenos','storno']
+        && request.resource.data.delta is int && request.resource.data.delta != 0
+        && request.resource.data.createdBy == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    // Dokumenti ulaza, izlaza i prenosa. Izlaz čeka odobrenje rukovodioca ili admina.
+    match /companies/{cid}/docs/{id} {
+      allow read: if master() || memberOf(cid);
+      allow create: if roleIs(cid, ['admin','magacioner']) && approved(cid)
+        && request.resource.data.type in ['ulaz','izlaz','prenos']
+        && request.resource.data.status in ['cekanje','proknjizen']
+        && (request.resource.data.type != 'izlaz' || request.resource.data.status == 'cekanje')
+        && request.resource.data.keys().hasOnly(['type','datum','status','lines','magacionerUid','magacionerIme','createdAt','nacin','otpremnica','dobavljac','osnov','preuzeo','napomena','razlog']);
+      allow update: if master()
+        || (approved(cid) && resource.data.status == 'cekanje' && roleIs(cid, ['admin','rukovodilac'])
+            && request.resource.data.status in ['proknjizen','odbijen']
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','odobrio','odobrioUid','odobrenoAt']))
+        || (adminOf(cid) && resource.data.status == 'proknjizen' && request.resource.data.status == 'storniran'
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','storno']));
+      allow delete: if false;
+    }
+
+    // Popis magacina (nacrt pa potvrđen).
+    match /companies/{cid}/popisi/{pid} {
+      allow read: if master() || memberOf(cid);
+      allow create: if canWrite(cid)
+        && request.resource.data.keys().hasOnly(['warehouseId','datum','status','lines','updatedAt','confirmedBy','confirmedAt'])
+        && request.resource.data.status in ['draft','confirmed'];
+      allow update: if canWrite(cid) && resource.data.status == 'draft'
+        && request.resource.data.keys().hasOnly(['warehouseId','datum','status','lines','updatedAt','confirmedBy','confirmedAt'])
+        && request.resource.data.status in ['draft','confirmed'];
+      allow delete: if false;
+    }
+
+    // Master admin: dokument se pravi ručno u konzoli, klijent ne može da piše.
+    match /masters/{uid} {
+      allow read: if signed() && request.auth.uid == uid;
+      allow write: if false;
+    }
+
+    match /companies/{cid} {
+      allow read: if master() || memberOf(cid) || (signed() && resource.data.ownerUid == request.auth.uid);
+      allow create: if signed()
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.status == 'pending'
+        && request.resource.data.keys().hasOnly(['name','ownerUid','status','warehouses','createdAt']);
+      allow update, delete: if master();
+    }
+
+    match /users/{uid} {
+      allow read: if master() || (signed() && request.auth.uid == uid) || adminOf(resource.data.companyId);
+
+      // 1) vlasnik pri registraciji firme  2) admin firme dodaje korisnika u odobrenu firmu
+      allow create:
+        if (signed() && request.auth.uid == uid
+              && request.resource.data.role == 'admin'
+              && request.resource.data.active == true
+              && request.resource.data.keys().hasOnly(['email','companyId','role','active','ime'])
+              && getAfter(/databases/$(db)/documents/companies/$(request.resource.data.companyId)).data.ownerUid == uid)
+        || (adminOf(request.resource.data.companyId)
+              && get(/databases/$(db)/documents/companies/$(request.resource.data.companyId)).data.status == 'approved'
+              && request.resource.data.role in ['admin','rukovodilac','magacioner']
+              && request.resource.data.active == true
+              && request.resource.data.keys().hasOnly(['email','companyId','role','active','ime']));
+
+      allow update: if master()
+        || (adminOf(resource.data.companyId) && request.auth.uid != uid
+              && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role','active'])
+              && request.resource.data.role in ['admin','rukovodilac','magacioner']);
+
+      allow delete: if master();
+    }
+  }
+}
