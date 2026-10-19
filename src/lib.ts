@@ -35,7 +35,7 @@ export async function loadItems(cid: string): Promise<Map<string, Item>> {
 }
 export async function loadPopisDates(cid: string): Promise<Record<string, string>> {
   const s = await getDocs(col(cid, "popisi")); const o: Record<string, string> = {};
-  s.docs.forEach(d => { const x = d.data(); if (x.status === "confirmed") o[x.warehouseId] = x.datum; });
+  s.docs.forEach(d => { const x = d.data(); if (x.status === "confirmed" && (!o[x.warehouseId] || x.datum > o[x.warehouseId])) o[x.warehouseId] = x.datum; });
   return o;
 }
 export async function loadStock(cid: string): Promise<Map<string, { sifra: string; locId: string; qty: number }>> {

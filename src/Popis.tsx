@@ -4,6 +4,7 @@ import readXlsxFile from "read-excel-file";
 import { doc, getDoc, getDocs, query, serverTimestamp, setDoc, where } from "firebase/firestore";
 import { db } from "./firebase";
 import type { Item } from "./Items";
+import PopisNaknadni from "./PopisNaknadni";
 import { Fail, col, descendants, errText, gridKeys, loadItems, loadLocs, pathOf, post, stockId, today, type Loc, type Me, type Mov } from "./lib";
 
 type PL = { sifra: string; locId: string; qty: string };
@@ -89,7 +90,7 @@ export default function Popis({ companyId, role, me }: { companyId: string; role
   return (
     <section className="panel">
       <label>{t("selectWarehouse")}<select value={wid} onChange={e => choose(e.target.value)}><option value="">—</option>{warehouses.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}</select></label>
-      {wid && status === "confirmed" && <p>{t("popisExists", { d: doneDate })}</p>}
+      {wid && status === "confirmed" && <><p className="hint">{t("popisExists", { d: doneDate })}</p><PopisNaknadni key={wid} companyId={companyId} wid={wid} locs={locs} items={items} me={me} canWrite={canWrite} /></>}
       {wid && status !== "confirmed" && canWrite && <>
         <div className="hdr">
           <label>{t("popisDatum")}<input type="date" max={today()} value={datum} onChange={e => setDatum(e.target.value)} /></label>
