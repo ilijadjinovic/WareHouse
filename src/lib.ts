@@ -1,4 +1,4 @@
-import { collection, doc, getDocs, runTransaction, serverTimestamp, type DocumentReference } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, runTransaction, serverTimestamp, setDoc, type DocumentReference } from "firebase/firestore";
 import type React from "react";
 import type { TFunction } from "i18next";
 import { db } from "./firebase";
@@ -103,6 +103,15 @@ export async function post(cid: string, movs: Mov[], me: Me, docRef?: DocumentRe
     }));
     if (docRef && docData) { if (mode === "set") tx.set(docRef, docData); else tx.update(docRef, docData); }
   });
+  try { await markDirty(cid, movs.reduce((m, x) => (x.datum < m ? x.datum : m), movs[0].datum)); } catch (e) { console.warn(e); }
+}
+
+/** Kretanje sa starijim datumom poništava dnevna stanja od tog datuma; biće ponovo izračunata pri sledećem otvaranju. */
+export async function markDirty(cid: string, datum: string) {
+  if (datum >= today()) return;
+  const ref = doc(db, "companies", cid, "meta", "snapshots");
+  const cur = await getDoc(ref); const d = cur.exists() ? (cur.data().dirtyFrom as string | undefined) : undefined;
+  if (!d || datum < d) await setDoc(ref, { dirtyFrom: datum });
 }
 
 /** Enter prebacuje u sledeće polje; Enter u poslednjem polju poziva onLast (novi red). */

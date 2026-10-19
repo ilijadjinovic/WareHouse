@@ -96,6 +96,30 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // Dnevna stanja (stanje na kraju svakog dana) i pomoćni zapis o tome od kog datuma treba preračunati.
+    match /companies/{cid}/snapshots/{day} {
+      allow read: if master() || memberOf(cid);
+      allow create, update: if canPost(cid)
+        && request.resource.data.keys().hasOnly(['datum','stanje','updatedAt'])
+        && request.resource.data.stanje is map;
+      allow delete: if false;
+    }
+    match /companies/{cid}/meta/{m} {
+      allow read: if master() || memberOf(cid);
+      allow create, update: if canPost(cid) && request.resource.data.keys().hasOnly(['dirtyFrom']);
+      allow delete: if false;
+    }
+
+    // Trigeri (minimalne zalihe) po artiklu i lokaciji; brisanje samo admin.
+    match /companies/{cid}/triggers/{tid} {
+      allow read: if master() || memberOf(cid);
+      allow create, update: if canWrite(cid)
+        && request.resource.data.keys().hasOnly(['sifra','locId','prag','nabavka','createdAt'])
+        && request.resource.data.keys().hasAll(['sifra','locId','prag'])
+        && request.resource.data.prag is int && request.resource.data.prag >= 0;
+      allow delete: if canDelete(cid);
+    }
+
     // Master admin: dokument se pravi ručno u konzoli, klijent ne može da piše.
     match /masters/{uid} {
       allow read: if signed() && request.auth.uid == uid;
